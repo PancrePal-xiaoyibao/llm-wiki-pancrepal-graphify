@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.8 (2026-04-05)
+
+- Fix: follow-up questions now check for wiki first (graphify-out/wiki/index.md) before falling back to graph.json
+- Fix: --update now auto-regenerates wiki if graphify-out/wiki/ exists
+- Fix: community articles show truncation notice ("... and N more nodes") when > 25 nodes
+- UX: pipeline completion message now lists all available flags and commands so users know what graphify can do
+
+## 0.1.7 (2026-04-05)
+
+- Add: `--wiki` flag — generates Wikipedia-style agent-crawlable wiki from the graph (index.md + community articles + god node articles)
+- Add: `graphify/wiki.py` module with `to_wiki()` — cross-community wikilinks, cohesion scores, audit trail, navigation footer
+- Add: 14 wiki tests (245 total)
+- Fix: follow-up question example code now correctly splits node labels by `_` to extract verb prefixes (previous version used `def`/`fn` prefix matching which always returned zero results)
+
 ## 0.1.6 (2026-04-05)
 
 - Fix: follow-up questions after pipeline now answered from graph.json, not by re-exploring the directory (was 25 tool calls / 1m30s; now instant)

@@ -14,6 +14,7 @@
 graphify-out/
 ├── graph.html       interactive graph - click nodes, search, filter by community
 ├── obsidian/        open as Obsidian vault
+├── wiki/            Wikipedia-style articles for agent navigation (--wiki)
 ├── GRAPH_REPORT.md  god nodes, surprising connections, suggested questions
 ├── graph.json       persistent graph - query weeks later without re-reading
 └── cache/           SHA256 cache - re-runs only process changed files
@@ -68,6 +69,8 @@ When the user types `/graphify`, invoke the Skill tool with `skill: "graphify"` 
 /graphify path "DigestAuth" "Response"
 /graphify explain "SwinTransformer"
 
+/graphify ./raw --watch            # auto-update graph whenever files change
+/graphify ./raw --wiki             # build agent-crawlable wiki (index.md + article per community)
 /graphify ./raw --svg              # export graph.svg
 /graphify ./raw --graphml          # export graph.graphml (Gephi, yEd)
 /graphify ./raw --neo4j            # generate cypher.txt for Neo4j
@@ -92,6 +95,8 @@ Works with any mix of file types:
 **Suggested questions** - 4-5 questions the graph is uniquely positioned to answer
 
 **Token benchmark** - printed automatically after every run. On a mixed corpus (Karpathy repos + papers + images): **71.5x** fewer tokens per query vs reading raw files.
+
+**Wiki** (`--wiki`) - Wikipedia-style markdown articles per community and god node, with an `index.md` entry point. Point any agent at `index.md` and it can navigate the knowledge base by reading files instead of parsing JSON.
 
 Every edge is tagged `EXTRACTED`, `INFERRED`, or `AMBIGUOUS` - you always know what was found vs guessed.
 
