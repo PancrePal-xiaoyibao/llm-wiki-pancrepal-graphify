@@ -210,8 +210,15 @@ DEEP_MODE (if --mode deep was given): be aggressive with INFERRED edges - indire
 If a file has YAML frontmatter (--- ... ---), copy source_url, captured_at, author,
   contributor onto every node from that file.
 
+confidence_score rules:
+- EXTRACTED edges: confidence_score must be 1.0
+- INFERRED edges: score 0.4-0.9 based on how certain you are.
+  Strong structural inference (e.g. two classes clearly share data): 0.8-0.9.
+  Reasonable but not certain: 0.6-0.7. Weak inference: 0.4-0.5.
+- AMBIGUOUS edges: score 0.1-0.3
+
 Output exactly this JSON (no other text):
-{"nodes":[{"id":"filestem_entityname","label":"Human Readable Name","file_type":"code|document|paper|image","source_file":"relative/path","source_location":null,"source_url":null,"captured_at":null,"author":null,"contributor":null}],"edges":[{"source":"node_id","target":"node_id","relation":"calls|implements|references|cites|conceptually_related_to|shares_data_with","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","source_file":"relative/path","source_location":null,"weight":1.0}],"input_tokens":0,"output_tokens":0}
+{"nodes":[{"id":"filestem_entityname","label":"Human Readable Name","file_type":"code|document|paper|image","source_file":"relative/path","source_location":null,"source_url":null,"captured_at":null,"author":null,"contributor":null}],"edges":[{"source":"node_id","target":"node_id","relation":"calls|implements|references|cites|conceptually_related_to|shares_data_with","confidence":"EXTRACTED|INFERRED|AMBIGUOUS","confidence_score":1.0,"source_file":"relative/path","source_location":null,"weight":1.0}],"input_tokens":0,"output_tokens":0}
 ```
 
 **Step B3 - Collect, cache, and merge**

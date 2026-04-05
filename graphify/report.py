@@ -24,6 +24,10 @@ def generate(
     inf_pct = round(confidences.count("INFERRED") / total * 100)
     amb_pct = round(confidences.count("AMBIGUOUS") / total * 100)
 
+    inf_edges = [(u, v, d) for u, v, d in G.edges(data=True) if d.get("confidence") == "INFERRED"]
+    inf_scores = [d.get("confidence_score", 0.5) for _, _, d in inf_edges]
+    inf_avg = round(sum(inf_scores) / len(inf_scores), 2) if inf_scores else None
+
     lines = [
         f"# Graph Report - {root}  ({today})",
         "",
@@ -41,7 +45,8 @@ def generate(
         "",
         "## Summary",
         f"- {G.number_of_nodes()} nodes · {G.number_of_edges()} edges · {len(communities)} communities detected",
-        f"- Extraction: {ext_pct}% EXTRACTED · {inf_pct}% INFERRED · {amb_pct}% AMBIGUOUS",
+        f"- Extraction: {ext_pct}% EXTRACTED · {inf_pct}% INFERRED · {amb_pct}% AMBIGUOUS"
+        + (f" · INFERRED: {len(inf_edges)} edges (avg confidence: {inf_avg})" if inf_avg is not None else ""),
         f"- Token cost: {token_cost.get('input', 0):,} input · {token_cost.get('output', 0):,} output",
         "",
         "## God Nodes (most connected - your core abstractions)",
@@ -55,8 +60,14 @@ def generate(
             relation = s.get("relation", "related_to")
             note = s.get("note", "")
             files = s.get("source_files", ["", ""])
+            conf = s.get("confidence", "EXTRACTED")
+            cscore = s.get("confidence_score")
+            if conf == "INFERRED" and cscore is not None:
+                conf_tag = f"INFERRED {cscore:.2f}"
+            else:
+                conf_tag = conf
             lines += [
-                f"- `{s['source']}` --{relation}--> `{s['target']}`  [{s['confidence']}]",
+                f"- `{s['source']}` --{relation}--> `{s['target']}`  [{conf_tag}]",
                 f"  {files[0]} → {files[1]}" + (f"  _{note}_" if note else ""),
             ]
     else:

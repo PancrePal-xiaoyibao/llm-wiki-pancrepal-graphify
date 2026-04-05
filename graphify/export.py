@@ -195,11 +195,18 @@ LEGEND.forEach(c => {{
 </script>"""
 
 
+_CONFIDENCE_SCORE_DEFAULTS = {"EXTRACTED": 1.0, "INFERRED": 0.5, "AMBIGUOUS": 0.2}
+
+
 def to_json(G: nx.Graph, communities: dict[int, list[str]], output_path: str) -> None:
     node_community = _node_community_map(communities)
     data = json_graph.node_link_data(G, edges="links")
     for node in data["nodes"]:
         node["community"] = node_community.get(node["id"])
+    for link in data["links"]:
+        if "confidence_score" not in link:
+            conf = link.get("confidence", "EXTRACTED")
+            link["confidence_score"] = _CONFIDENCE_SCORE_DEFAULTS.get(conf, 1.0)
     with open(output_path, "w") as f:
         json.dump(data, f, indent=2)
 
