@@ -1,4 +1,4 @@
-"""Token-reduction benchmark - measures how much context graphify saves vs naive full-corpus approach."""
+"""Token-reduction benchmark - measures how much context xiaoyibao saves vs naive full-corpus approach."""
 from __future__ import annotations
 import json
 from pathlib import Path
@@ -62,11 +62,11 @@ _SAMPLE_QUESTIONS = [
 
 
 def run_benchmark(
-    graph_path: str = "graphify-out/graph.json",
+    graph_path: str = "xiaoyibao-out/graph.json",
     corpus_words: int | None = None,
     questions: list[str] | None = None,
 ) -> dict:
-    """Measure token reduction: corpus tokens vs graphify query tokens.
+    """Measure token reduction: corpus tokens vs xiaoyibao query tokens.
 
     Args:
         graph_path: path to the built graph
@@ -117,7 +117,7 @@ def print_benchmark(result: dict) -> None:
         print(f"Benchmark error: {result['error']}")
         return
 
-    print(f"\ngraphify token reduction benchmark")
+    print(f"\nxiaoyibao token reduction benchmark")
     print(f"{'─' * 50}")
     print(f"  Corpus:          {result['corpus_words']:,} words → ~{result['corpus_tokens']:,} tokens (naive)")
     print(f"  Graph:           {result['nodes']:,} nodes, {result['edges']:,} edges")

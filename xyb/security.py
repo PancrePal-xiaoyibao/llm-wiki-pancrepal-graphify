@@ -1,8 +1,8 @@
-# Security helpers - re-export from graphify.security
+# Security helpers - re-export from xiaoyibao.security
 """This module exists for backward compatibility."""
 
-# Re-export everything from graphify.security
-from graphify.security import (
+# Re-export everything from xiaoyibao.security
+from xiaoyibao.security import (
     validate_url,
     _build_opener,
     safe_fetch,

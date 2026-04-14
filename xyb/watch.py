@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 
 
-from graphify.detect import CODE_EXTENSIONS, DOC_EXTENSIONS, PAPER_EXTENSIONS, IMAGE_EXTENSIONS
+from xiaoyibao.detect import CODE_EXTENSIONS, DOC_EXTENSIONS, PAPER_EXTENSIONS, IMAGE_EXTENSIONS
 
 _WATCHED_EXTENSIONS = CODE_EXTENSIONS | DOC_EXTENSIONS | PAPER_EXTENSIONS | IMAGE_EXTENSIONS
 _CODE_EXTENSIONS = CODE_EXTENSIONS
@@ -17,26 +17,26 @@ def _rebuild_code(watch_path: Path, *, follow_symlinks: bool = False) -> bool:
     Returns True on success, False on error.
     """
     try:
-        from graphify.extract import extract
-        from graphify.detect import detect
-        from graphify.build import build_from_json
-        from graphify.cluster import cluster, score_all
-        from graphify.analyze import god_nodes, surprising_connections, suggest_questions
-        from graphify.report import generate
-        from graphify.export import to_json
+        from xiaoyibao.extract import extract
+        from xiaoyibao.detect import detect
+        from xiaoyibao.build import build_from_json
+        from xiaoyibao.cluster import cluster, score_all
+        from xiaoyibao.analyze import god_nodes, surprising_connections, suggest_questions
+        from xiaoyibao.report import generate
+        from xiaoyibao.export import to_json
 
         detected = detect(watch_path, follow_symlinks=follow_symlinks)
         code_files = [Path(f) for f in detected['files']['code']]
 
         if not code_files:
-            print("[graphify watch] No code files found - nothing to rebuild.")
+            print("[xiaoyibao watch] No code files found - nothing to rebuild.")
             return False
 
         result = extract(code_files)
 
         # Preserve semantic nodes/edges from a previous full run.
         # AST-only rebuild replaces code nodes; doc/paper/image nodes are kept.
-        out = watch_path / "graphify-out"
+        out = watch_path / "xiaoyibao-out"
         existing_graph = out / "graph.json"
         if existing_graph.exists():
             try:
@@ -82,25 +82,25 @@ def _rebuild_code(watch_path: Path, *, follow_symlinks: bool = False) -> bool:
         if flag.exists():
             flag.unlink()
 
-        print(f"[graphify watch] Rebuilt: {G.number_of_nodes()} nodes, "
+        print(f"[xiaoyibao watch] Rebuilt: {G.number_of_nodes()} nodes, "
               f"{G.number_of_edges()} edges, {len(communities)} communities")
-        print(f"[graphify watch] graph.json and GRAPH_REPORT.md updated in {out}")
+        print(f"[xiaoyibao watch] graph.json and GRAPH_REPORT.md updated in {out}")
         return True
 
     except Exception as exc:
-        print(f"[graphify watch] Rebuild failed: {exc}")
+        print(f"[xiaoyibao watch] Rebuild failed: {exc}")
         return False
 
 
 def _notify_only(watch_path: Path) -> None:
     """Write a flag file and print a notification (fallback for non-code-only corpora)."""
-    flag = watch_path / "graphify-out" / "needs_update"
+    flag = watch_path / "xiaoyibao-out" / "needs_update"
     flag.parent.mkdir(parents=True, exist_ok=True)
     flag.write_text("1", encoding="utf-8")
-    print(f"\n[graphify watch] New or changed files detected in {watch_path}")
-    print("[graphify watch] Non-code files changed - semantic re-extraction requires LLM.")
-    print("[graphify watch] Run `/graphify --update` in Claude Code to update the graph.")
-    print(f"[graphify watch] Flag written to {flag}")
+    print(f"\n[xiaoyibao watch] New or changed files detected in {watch_path}")
+    print("[xiaoyibao watch] Non-code files changed - semantic re-extraction requires LLM.")
+    print("[xiaoyibao watch] Run `/xiaoyibao --update` in Claude Code to update the graph.")
+    print(f"[xiaoyibao watch] Flag written to {flag}")
 
 
 def _has_non_code(changed_paths: list[Path]) -> bool:
@@ -113,7 +113,7 @@ def watch(watch_path: Path, debounce: float = 3.0) -> None:
 
     For code-only changes: re-runs AST extraction + rebuild immediately (no LLM).
     For doc/paper/image changes: writes a needs_update flag and notifies the user
-    to run /graphify --update (LLM extraction required).
+    to run /xiaoyibao --update (LLM extraction required).
 
     debounce: seconds to wait after the last change before triggering (avoids
     running on every keystroke when many files are saved at once).
@@ -138,7 +138,7 @@ def watch(watch_path: Path, debounce: float = 3.0) -> None:
                 return
             if any(part.startswith(".") for part in path.parts):
                 return
-            if "graphify-out" in path.parts:
+            if "xiaoyibao-out" in path.parts:
                 return
             last_trigger = time.monotonic()
             pending = True
@@ -149,10 +149,10 @@ def watch(watch_path: Path, debounce: float = 3.0) -> None:
     observer.schedule(handler, str(watch_path), recursive=True)
     observer.start()
 
-    print(f"[graphify watch] Watching {watch_path.resolve()} - press Ctrl+C to stop")
-    print(f"[graphify watch] Code changes rebuild graph automatically. "
-          f"Doc/image changes require /graphify --update.")
-    print(f"[graphify watch] Debounce: {debounce}s")
+    print(f"[xiaoyibao watch] Watching {watch_path.resolve()} - press Ctrl+C to stop")
+    print(f"[xiaoyibao watch] Code changes rebuild graph automatically. "
+          f"Doc/image changes require /xiaoyibao --update.")
+    print(f"[xiaoyibao watch] Debounce: {debounce}s")
 
     try:
         while True:
@@ -161,13 +161,13 @@ def watch(watch_path: Path, debounce: float = 3.0) -> None:
                 pending = False
                 batch = list(changed)
                 changed.clear()
-                print(f"\n[graphify watch] {len(batch)} file(s) changed")
+                print(f"\n[xiaoyibao watch] {len(batch)} file(s) changed")
                 if _has_non_code(batch):
                     _notify_only(watch_path)
                 else:
                     _rebuild_code(watch_path)
     except KeyboardInterrupt:
-        print("\n[graphify watch] Stopped.")
+        print("\n[xiaoyibao watch] Stopped.")
     finally:
         observer.stop()
         observer.join()
@@ -175,7 +175,7 @@ def watch(watch_path: Path, debounce: float = 3.0) -> None:
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Watch a folder and auto-update the graphify graph")
+    parser = argparse.ArgumentParser(description="Watch a folder and auto-update the xiaoyibao graph")
     parser.add_argument("path", nargs="?", default=".", help="Folder to watch (default: .)")
     parser.add_argument("--debounce", type=float, default=3.0,
                         help="Seconds to wait after last change before updating (default: 3)")

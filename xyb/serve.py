@@ -5,10 +5,10 @@ import sys
 from pathlib import Path
 import networkx as nx
 from networkx.readwrite import json_graph
-from graphify.security import sanitize_label
+from xiaoyibao.security import sanitize_label
 
-# Import from graphify base
-from graphify.serve import (
+# Import from xiaoyibao base
+from xiaoyibao.serve import (
     _load_graph,
     _communities_from_graph,
     _score_nodes,
@@ -25,12 +25,12 @@ from xyb.analyze import god_nodes as _god_nodes_impl
 
 
 def _find_node(G: nx.Graph, label: str) -> list[str]:
-    """Wrapper that mirrors graphify.serve._find_node but with medical label normalization."""
+    """Wrapper that mirrors xiaoyibao.serve._find_node but with medical label normalization."""
     # Reuse the generic implementation
     return _find_node_generic(G, label)
 
 
-def serve(graph_path: str = "graphify-out/graph.json") -> None:
+def serve(graph_path: str = "xiaoyibao-out/graph.json") -> None:
     """Start the MCP server with medical tools."""
     try:
         from mcp.server import Server
@@ -934,5 +934,5 @@ def _tool_get_diagnostic_criteria(arguments: dict) -> str:
 
 
 if __name__ == "__main__":
-    graph_path = sys.argv[1] if len(sys.argv) > 1 else "graphify-out/graph.json"
+    graph_path = sys.argv[1] if len(sys.argv) > 1 else "xiaoyibao-out/graph.json"
     serve(graph_path)

@@ -1,44 +1,54 @@
-[build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "xyb"
-version = "1.0.0"
-description = "Oncology patient document organizer - turn any folder of medical documents into a queryable knowledge graph for tumor patients"
+[tool.poetry]
+name = "xiaoyibao"
+version = "0.1.0"
+description = "胰腺癌智能管理知识图谱平台 - Pancreatic cancer knowledge graph platform"
+authors = ["PancrePal <pancrepal@xiaoyibao.org>", "Safi Shamsi <safishamsi@xiaoyibao.org>"]
+license = "MIT"
 readme = "README.md"
-license = { file = "LICENSE" }
-keywords = ["oncology", "tumor", "medical-records", "knowledge-graph", "dicom", "patient-portal", "xiaoyibao", "mcp"]
-requires-python = ">=3.10"
-dependencies = [
-    "networkx",
-    "pydicom",
-    "Pillow",
-    "pypdf",
+homepage = "https://github.com/PancrePal-xiaoyibao/llm-wiki-pancrepal-graphify"
+repository = "https://github.com/PancrePal-xiaoyibao/llm-wiki-pancrepal-graphify"
+documentation = "https://github.com/PancrePal-xiaoyibao/llm-wiki-pancrepal-graphify#readme"
+keywords = ["pancreatic-cancer", "knowledge-graph", "medical-ai", "mcp", "healthcare"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Healthcare Industry",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Medical Science Apps",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
-[project.urls]
-Homepage = "https://github.com/PancrePal-xiaoyibao/llm-wiki-pancrepal-graphify"
-Repository = "https://github.com/PancrePal-xiaoyibao/llm-wiki-pancrepal-graphify"
-Issues = "https://github.com/PancrePal-xiaoyibao/llm-wiki-pancrepal-graphify/issues"
+[tool.poetry.dependencies]
+python = "^3.10"
+pydantic = "^2.0"
+python-docx = "^1.1"
+pymupdf = "^1.24"
+pydicom = "^2.4"
+spacy = "^3.7"
+scikit-learn = "^1.3"
+networkx = "^3.2"
+plotly = "^5.18"
+pandas = "^2.1"
+reportlab = "^4.0"
+jinja2 = "^3.1"
+markdown = "^3.5"
+mcp = {extras = ["cli"], version = "^1.0"}
+httpx = "^0.27"
 
-[project.optional-dependencies]
-mcp = ["mcp"]
-neo4j = ["neo4j"]
-pdf = ["pypdf"]
-watch = ["watchdog"]
-svg = ["matplotlib"]
-leiden = ["graspologic; python_version < '3.13'"]
-office = ["python-docx", "openpyxl"]
-video = ["faster-whisper", "yt-dlp"]
-all = ["mcp", "neo4j", "pypdf", "watchdog", "graspologic; python_version < '3.13'", "python-docx", "openpyxl", "matplotlib"]
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4"
+pytest-cov = "^4.1"
+black = "^24.1"
+ruff = "^0.2"
 
-[project.scripts]
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# CLI 入口：xyb
+[tool.poetry.scripts]
 xyb = "xyb.__main__:main"
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["xyb*"]
-
-[tool.setuptools.package-data]
-xyb = ["skill.md"]

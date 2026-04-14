@@ -5,7 +5,7 @@
 
 def __getattr__(name):
     # Lazy imports so `xyb install` works before heavy deps are in place.
-    # 同时兼容旧名 graphify，避免破坏现有脚本
+    # 同时兼容旧名 xiaoyibao，避免破坏现有脚本
     _map = {
         # --- 核心提取 ---
         "extract": ("xyb.extract", "extract"),
@@ -37,46 +37,46 @@ def __getattr__(name):
         "to_canvas": ("xyb.export", "to_canvas"),
         "to_cypher": ("xyb.export", "to_cypher"),
         "to_wiki": ("xyb.wiki", "to_wiki"),
-        # --- graphify 兼容（双别名） ---
+        # --- xiaoyibao 兼容（双别名） ---
         # 核心提取
-        "extract_python": ("graphify.extract", "extract_python"),
-        "extract_js": ("graphify.extract", "extract_js"),
-        "extract_java": ("graphify.extract", "extract_java"),
-        "extract_c": ("graphify.extract", "extract_c"),
-        "extract_cpp": ("graphify.extract", "extract_cpp"),
-        "extract_go": ("graphify.extract", "extract_go"),
-        "extract_rust": ("graphify.extract", "extract_rust"),
-        "extract_ruby": ("graphify.extract", "extract_ruby"),
-        "extract_csharp": ("graphify.extract", "extract_csharp"),
-        "extract_kotlin": ("graphify.extract", "extract_kotlin"),
-        "extract_scala": ("graphify.extract", "extract_scala"),
-        "extract_php": ("graphify.extract", "extract_php"),
-        "extract_swift": ("graphify.extract", "extract_swift"),
-        "extract_julia": ("graphify.extract", "extract_julia"),
-        "extract_lua": ("graphify.extract", "extract_lua"),
-        "extract_objc": ("graphify.extract", "extract_objc"),
-        "extract_elixir": ("graphify.extract", "extract_elixir"),
-        "extract_powershell": ("graphify.extract", "extract_powershell"),
-        "extract_blade": ("graphify.extract", "extract_blade"),
-        "extract_dart": ("graphify.extract", "extract_dart"),
-        # 核心构建与分析（graphify 同名功能）
-        "analyze": ("graphify.analyze", "analyze"),
-        "cluster_graph": ("graphify.cluster", "cluster"),
-        "build_graph": ("graphify.build", "build"),
-        "export_graph": ("graphify.export", "export"),
-        "detect_file_types": ("graphify.detect", "detect"),
-        # 兼容别名：让 xyb 完全镜像 graphify 的导出
-        "ingest": ("graphify.ingest", "ingest"),
-        "validate": ("graphify.validate", "validate"),
-        "security_check": ("graphify.security", "security_check"),
-        "transcribe_audio": ("graphify.transcribe", "transcribe"),
-        "generate_wiki": ("graphify.wiki", "generate_wiki"),
-        "generate_html": ("graphify.export", "to_html"),
-        "generate_svg": ("graphify.export", "to_svg"),
-        "generate_json": ("graphify.export", "to_json"),
-        "to_neo4j": ("graphify.export", "to_cypher"),
+        "extract_python": ("xiaoyibao.extract", "extract_python"),
+        "extract_js": ("xiaoyibao.extract", "extract_js"),
+        "extract_java": ("xiaoyibao.extract", "extract_java"),
+        "extract_c": ("xiaoyibao.extract", "extract_c"),
+        "extract_cpp": ("xiaoyibao.extract", "extract_cpp"),
+        "extract_go": ("xiaoyibao.extract", "extract_go"),
+        "extract_rust": ("xiaoyibao.extract", "extract_rust"),
+        "extract_ruby": ("xiaoyibao.extract", "extract_ruby"),
+        "extract_csharp": ("xiaoyibao.extract", "extract_csharp"),
+        "extract_kotlin": ("xiaoyibao.extract", "extract_kotlin"),
+        "extract_scala": ("xiaoyibao.extract", "extract_scala"),
+        "extract_php": ("xiaoyibao.extract", "extract_php"),
+        "extract_swift": ("xiaoyibao.extract", "extract_swift"),
+        "extract_julia": ("xiaoyibao.extract", "extract_julia"),
+        "extract_lua": ("xiaoyibao.extract", "extract_lua"),
+        "extract_objc": ("xiaoyibao.extract", "extract_objc"),
+        "extract_elixir": ("xiaoyibao.extract", "extract_elixir"),
+        "extract_powershell": ("xiaoyibao.extract", "extract_powershell"),
+        "extract_blade": ("xiaoyibao.extract", "extract_blade"),
+        "extract_dart": ("xiaoyibao.extract", "extract_dart"),
+        # 核心构建与分析（xiaoyibao 同名功能）
+        "analyze": ("xiaoyibao.analyze", "analyze"),
+        "cluster_graph": ("xiaoyibao.cluster", "cluster"),
+        "build_graph": ("xiaoyibao.build", "build"),
+        "export_graph": ("xiaoyibao.export", "export"),
+        "detect_file_types": ("xiaoyibao.detect", "detect"),
+        # 兼容别名：让 xyb 完全镜像 xiaoyibao 的导出
+        "ingest": ("xiaoyibao.ingest", "ingest"),
+        "validate": ("xiaoyibao.validate", "validate"),
+        "security_check": ("xiaoyibao.security", "security_check"),
+        "transcribe_audio": ("xiaoyibao.transcribe", "transcribe"),
+        "generate_wiki": ("xiaoyibao.wiki", "generate_wiki"),
+        "generate_html": ("xiaoyibao.export", "to_html"),
+        "generate_svg": ("xiaoyibao.export", "to_svg"),
+        "generate_json": ("xiaoyibao.export", "to_json"),
+        "to_neo4j": ("xiaoyibao.export", "to_cypher"),
         # 重新导出 collect_files（已在前面医疗映射中，这里仅确保存在）
-        "collect_files": ("graphify.extract", "collect_files"),
+        "collect_files": ("xiaoyibao.extract", "collect_files"),
         # 注意：extract（通用）已在前面映射到 xyb.extract，无需重复
         # --- 医疗专用 ---
         "extract_from_text": ("xyb.extract_medical", "extract_from_text"),

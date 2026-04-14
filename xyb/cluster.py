@@ -13,7 +13,7 @@ def _suppress_output():
     graspologic's leiden() emits ANSI escape sequences (progress bars,
     colored warnings) that corrupt PowerShell 5.1's scroll buffer on
     Windows (see issue #19). Redirecting stdout/stderr to devnull during
-    the call prevents this without losing any graphify output.
+    the call prevents this without losing any xiaoyibao output.
     """
     return contextlib.redirect_stdout(io.StringIO())
 
@@ -158,9 +158,9 @@ def group_by_timeline(G: nx.Graph) -> dict[str, list[str]]:
         prefix = date[:7] if len(date) >= 7 else date
         groups.setdefault(prefix, []).append(node_id)
     return groups
-# ========== Graphify compatibility layer ==========
-# Re-export graphify.cluster symbols for backward compatibility
-from graphify.cluster import (
+# ========== Xiaoyibao compatibility layer ==========
+# Re-export xiaoyibao.cluster symbols for backward compatibility
+from xiaoyibao.cluster import (
     cluster,
     cohesion_score,
     score_all,

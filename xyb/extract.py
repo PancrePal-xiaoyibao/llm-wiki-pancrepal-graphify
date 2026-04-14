@@ -4,9 +4,9 @@ Routes files to the appropriate extractor based on file type,
 then optionally runs LLM-based entity extraction on raw text.
 """
 from __future__ import annotations
-# Re-export graphify.extract symbols for backward compatibility
+# Re-export xiaoyibao.extract symbols for backward compatibility
 # (so `from xyb.extract import extract_python` works)
-from graphify.extract import (
+from xiaoyibao.extract import (
     extract as extract_general,  # noqa: F401
     extract_python,
     extract_js,
@@ -201,7 +201,7 @@ def extract(
 ) -> dict:
     """Unified extract entry point.
 
-    - If `paths` is a list: dispatch to graphify's general extractor.
+    - If `paths` is a list: dispatch to xiaoyibao's general extractor.
     - If `paths` is a single Path with `file_type`: use medical extractor.
     """
     from pathlib import Path as _Path

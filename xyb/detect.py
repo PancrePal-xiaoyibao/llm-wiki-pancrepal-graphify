@@ -63,15 +63,15 @@ OFFICE = "office"
 URL = "url"
 
 def classify_file(path: Path) -> FileType | str | None:
-    """Classify a file, preserving graphify logic and adding medical types."""
-    # Let graphify classify first (handles CODE, PAPER, IMAGE, DOCUMENT, VIDEO, and special cases)
-    from graphify.detect import classify_file as _gg_classify
+    """Classify a file, preserving xiaoyibao logic and adding medical types."""
+    # Let xiaoyibao classify first (handles CODE, PAPER, IMAGE, DOCUMENT, VIDEO, and special cases)
+    from xiaoyibao.detect import classify_file as _gg_classify
     result = _gg_classify(path)
     if result is not None:
-        # graphify found a type (including PAPER for academic papers)
+        # xiaoyibao found a type (including PAPER for academic papers)
         return result
 
-    # graphify returned None — check for medical-specific types
+    # xiaoyibao returned None — check for medical-specific types
     ext = path.suffix.lower()
     parts = path.parts  # tuple of path components
 
@@ -102,16 +102,16 @@ OFFICE = "office"
 URL = "url"
 
 
-# ========== Graphify compatibility layer ==========
-# Re-export graphify.detect symbols for tests and general usage
+# ========== Xiaoyibao compatibility layer ==========
+# Re-export xiaoyibao.detect symbols for tests and general usage
 
-from graphify.detect import (
+from xiaoyibao.detect import (
     FileType,
     detect as _gg_detect,
     count_words,
     _looks_like_paper,
     _is_ignored,
-    _load_graphifyignore,
+    _load_xiaoyibaoignore,
     CODE_EXTENSIONS,
     DOC_EXTENSIONS,
     CORPUS_WARN_THRESHOLD,

@@ -1,16 +1,16 @@
-# git hook integration - install/uninstall graphify post-commit and post-checkout hooks
+# git hook integration - install/uninstall xiaoyibao post-commit and post-checkout hooks
 from __future__ import annotations
 import re
 from pathlib import Path
 
-_HOOK_MARKER = "# graphify-hook-start"
-_HOOK_MARKER_END = "# graphify-hook-end"
-_CHECKOUT_MARKER = "# graphify-checkout-hook-start"
-_CHECKOUT_MARKER_END = "# graphify-checkout-hook-end"
+_HOOK_MARKER = "# xiaoyibao-hook-start"
+_HOOK_MARKER_END = "# xiaoyibao-hook-end"
+_CHECKOUT_MARKER = "# xiaoyibao-checkout-hook-start"
+_CHECKOUT_MARKER_END = "# xiaoyibao-checkout-hook-end"
 
 _PYTHON_DETECT = """\
 # Detect the correct Python interpreter (handles pipx, venv, system installs)
-GRAPHIFY_BIN=$(command -v graphify 2>/dev/null)
+GRAPHIFY_BIN=$(command -v xiaoyibao 2>/dev/null)
 if [ -n "$GRAPHIFY_BIN" ]; then
     _SHEBANG=$(head -1 "$GRAPHIFY_BIN" | sed 's/^#![[:space:]]*//')
     case "$_SHEBANG" in
@@ -22,15 +22,15 @@ if [ -n "$GRAPHIFY_BIN" ]; then
     case "$GRAPHIFY_PYTHON" in
         *[!a-zA-Z0-9/_.-]*) GRAPHIFY_PYTHON="" ;;
     esac
-    if [ -n "$GRAPHIFY_PYTHON" ] && ! "$GRAPHIFY_PYTHON" -c "import graphify" 2>/dev/null; then
+    if [ -n "$GRAPHIFY_PYTHON" ] && ! "$GRAPHIFY_PYTHON" -c "import xiaoyibao" 2>/dev/null; then
         GRAPHIFY_PYTHON=""
     fi
 fi
 # Fall back: try python3, then python (Windows has no python3 shim)
 if [ -z "$GRAPHIFY_PYTHON" ]; then
-    if command -v python3 >/dev/null 2>&1 && python3 -c "import graphify" 2>/dev/null; then
+    if command -v python3 >/dev/null 2>&1 && python3 -c "import xiaoyibao" 2>/dev/null; then
         GRAPHIFY_PYTHON="python3"
-    elif command -v python >/dev/null 2>&1 && python -c "import graphify" 2>/dev/null; then
+    elif command -v python >/dev/null 2>&1 && python -c "import xiaoyibao" 2>/dev/null; then
         GRAPHIFY_PYTHON="python"
     else
         exit 0
@@ -39,9 +39,9 @@ fi
 """
 
 _HOOK_SCRIPT = """\
-# graphify-hook-start
+# xiaoyibao-hook-start
 # Auto-rebuilds the knowledge graph after each commit (code files only, no LLM needed).
-# Installed by: graphify hook install
+# Installed by: xiaoyibao hook install
 
 CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only HEAD 2>/dev/null)
 if [ -z "$CHANGED" ]; then
@@ -60,23 +60,23 @@ changed = [Path(f.strip()) for f in changed_raw.strip().splitlines() if f.strip(
 if not changed:
     sys.exit(0)
 
-print(f'[graphify hook] {len(changed)} file(s) changed - rebuilding graph...')
+print(f'[xiaoyibao hook] {len(changed)} file(s) changed - rebuilding graph...')
 
 try:
-    from graphify.watch import _rebuild_code
+    from xiaoyibao.watch import _rebuild_code
     _rebuild_code(Path('.'))
 except Exception as exc:
-    print(f'[graphify hook] Rebuild failed: {exc}')
+    print(f'[xiaoyibao hook] Rebuild failed: {exc}')
     sys.exit(1)
 "
-# graphify-hook-end
+# xiaoyibao-hook-end
 """
 
 
 _CHECKOUT_SCRIPT = """\
-# graphify-checkout-hook-start
+# xiaoyibao-checkout-hook-start
 # Auto-rebuilds the knowledge graph (code only) when switching branches.
-# Installed by: graphify hook install
+# Installed by: xiaoyibao hook install
 
 PREV_HEAD=$1
 NEW_HEAD=$2
@@ -87,24 +87,24 @@ if [ "$BRANCH_SWITCH" != "1" ]; then
     exit 0
 fi
 
-# Only run if graphify-out/ exists (graph has been built before)
-if [ ! -d "graphify-out" ]; then
+# Only run if xiaoyibao-out/ exists (graph has been built before)
+if [ ! -d "xiaoyibao-out" ]; then
     exit 0
 fi
 
 """ + _PYTHON_DETECT + """
-echo "[graphify] Branch switched - rebuilding knowledge graph (code files)..."
+echo "[xiaoyibao] Branch switched - rebuilding knowledge graph (code files)..."
 $GRAPHIFY_PYTHON -c "
-from graphify.watch import _rebuild_code
+from xiaoyibao.watch import _rebuild_code
 from pathlib import Path
 import sys
 try:
     _rebuild_code(Path('.'))
 except Exception as exc:
-    print(f'[graphify] Rebuild failed: {exc}')
+    print(f'[xiaoyibao] Rebuild failed: {exc}')
     sys.exit(1)
 "
-# graphify-checkout-hook-end
+# xiaoyibao-checkout-hook-end
 """
 
 
@@ -132,13 +132,13 @@ def _install_hook(hooks_dir: Path, name: str, script: str, marker: str) -> str:
 
 
 def _uninstall_hook(hooks_dir: Path, name: str, marker: str, marker_end: str) -> str:
-    """Remove graphify section from a git hook using start/end markers."""
+    """Remove xiaoyibao section from a git hook using start/end markers."""
     hook_path = hooks_dir / name
     if not hook_path.exists():
         return f"no {name} hook found - nothing to remove."
     content = hook_path.read_text(encoding="utf-8")
     if marker not in content:
-        return f"graphify hook not found in {name} - nothing to remove."
+        return f"xiaoyibao hook not found in {name} - nothing to remove."
     new_content = re.sub(
         rf"{re.escape(marker)}.*?{re.escape(marker_end)}\n?",
         "",
@@ -149,11 +149,11 @@ def _uninstall_hook(hooks_dir: Path, name: str, marker: str, marker_end: str) ->
         hook_path.unlink()
         return f"removed {name} hook at {hook_path}"
     hook_path.write_text(new_content + "\n", encoding="utf-8", newline="\n")
-    return f"graphify removed from {name} at {hook_path} (other hook content preserved)"
+    return f"xiaoyibao removed from {name} at {hook_path} (other hook content preserved)"
 
 
 def install(path: Path = Path(".")) -> str:
-    """Install graphify post-commit and post-checkout hooks in the nearest git repo."""
+    """Install xiaoyibao post-commit and post-checkout hooks in the nearest git repo."""
     root = _git_root(path)
     if root is None:
         raise RuntimeError(f"No git repository found at or above {path.resolve()}")
@@ -168,7 +168,7 @@ def install(path: Path = Path(".")) -> str:
 
 
 def uninstall(path: Path = Path(".")) -> str:
-    """Remove graphify post-commit and post-checkout hooks."""
+    """Remove xiaoyibao post-commit and post-checkout hooks."""
     root = _git_root(path)
     if root is None:
         raise RuntimeError(f"No git repository found at or above {path.resolve()}")
@@ -181,7 +181,7 @@ def uninstall(path: Path = Path(".")) -> str:
 
 
 def status(path: Path = Path(".")) -> str:
-    """Check if graphify hooks are installed."""
+    """Check if xiaoyibao hooks are installed."""
     root = _git_root(path)
     if root is None:
         return "Not in a git repository."
@@ -191,7 +191,7 @@ def status(path: Path = Path(".")) -> str:
         p = hooks_dir / name
         if not p.exists():
             return "not installed"
-        return "installed" if marker in p.read_text(encoding="utf-8") else "not installed (hook exists but graphify not found)"
+        return "installed" if marker in p.read_text(encoding="utf-8") else "not installed (hook exists but xiaoyibao not found)"
 
     commit = _check("post-commit", _HOOK_MARKER)
     checkout = _check("post-checkout", _CHECKOUT_MARKER)

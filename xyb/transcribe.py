@@ -10,7 +10,7 @@ VIDEO_EXTENSIONS = {'.mp4', '.mov', '.webm', '.mkv', '.avi', '.m4v', '.mp3', '.w
 URL_PREFIXES = ('http://', 'https://', 'www.')
 
 _DEFAULT_MODEL = "base"
-_TRANSCRIPTS_DIR = "graphify-out/transcripts"
+_TRANSCRIPTS_DIR = "xiaoyibao-out/transcripts"
 _FALLBACK_PROMPT = "Use proper punctuation and paragraph breaks."
 
 
@@ -25,7 +25,7 @@ def _get_whisper():
     except ImportError as exc:
         raise ImportError(
             "Video transcription requires faster-whisper. "
-            "Run: pip install 'graphifyy[video]'"
+            "Run: pip install 'xiaoyibaoy[video]'"
         ) from exc
 
 
@@ -36,7 +36,7 @@ def _get_yt_dlp():
     except ImportError as exc:
         raise ImportError(
             "YouTube/URL download requires yt-dlp. "
-            "Run: pip install 'graphifyy[video]'"
+            "Run: pip install 'xiaoyibaoy[video]'"
         ) from exc
 
 

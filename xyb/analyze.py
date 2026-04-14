@@ -109,7 +109,7 @@ def _is_concept_node(G: nx.Graph, node_id: str) -> bool:
     return False
 
 
-from graphify.detect import CODE_EXTENSIONS, DOC_EXTENSIONS, PAPER_EXTENSIONS, IMAGE_EXTENSIONS
+from xiaoyibao.detect import CODE_EXTENSIONS, DOC_EXTENSIONS, PAPER_EXTENSIONS, IMAGE_EXTENSIONS
 
 
 def _file_category(path: str) -> str:
@@ -822,17 +822,17 @@ def medication_risk_scan(G: nx.Graph) -> list[dict]:
                     })
 
     return results
-# ========== Graphify compatibility layer ==========
-# Re-export graphify.analyze symbols for backward compatibility
-from graphify.analyze import (
+# ========== Xiaoyibao compatibility layer ==========
+# Re-export xiaoyibao.analyze symbols for backward compatibility
+from xiaoyibao.analyze import (
     god_nodes,
     surprising_connections,
     suggest_questions,
     graph_diff,
 )
 
-# _build_hypergraph may exist in graphify.analyze
+# _build_hypergraph may exist in xiaoyibao.analyze
 try:
-    from graphify.analyze import _build_hypergraph
+    from xiaoyibao.analyze import _build_hypergraph
 except ImportError:
     _build_hypergraph = None
