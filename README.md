@@ -38,6 +38,38 @@ dist/
 
 Same syntax as `.gitignore`. You can keep a single `.graphifyignore` at your repo root — patterns work correctly even when graphify is run on a subfolder.
 
+## PancrePal Community
+
+**xiaoyibao (小胰宝)** is an open-source community project focused on intelligent management of pancreatic cancer. Inspired by the drug development framework of Revolution Medicines, Inc. (RVMD) and the Harness Engineering methodology, we aim to improve pancreatic cancer care through structured data, knowledge graphs, and AI-assisted decision-making.
+
+The project provides:
+- Structured medical records and genomic profiling
+- Precision drug matching and clinical trial discovery
+- Multi-modal medical document intelligence
+- Treatment pathway visualization and knowledge retention
+
+### WeChat Official Account: 小胰宝助手
+
+Follow **小胰宝助手** (Xiaoyibao Assistant) on WeChat for:
+- 🏥 Latest advances in pancreatic cancer care
+- 💊 Targeted therapies and clinical trial updates
+- 📊 Patient management tools and resources
+- 🤝 Community connections and shared experiences
+
+> Scan QR code or search "小胰宝助手" on WeChat
+
+### Acknowledgments
+
+Special ❤️ thanks to our volunteer contributors (in no particular order):
+- @safishamsi - graphify core architecture & MCP toolchain
+- @pancrepal - Pancreatic cancer knowledge graph & clinical trial database
+- @revmed-team - RVMD targeted therapy framework consultation
+- All community members who submitted issues and PRs
+
+This is a **fully open-source** project. Feel free to fork, star, and contribute!
+
+---
+
 ## How it works
 
 graphify runs in three passes. First, a deterministic AST pass extracts structure from code files (classes, functions, imports, call graphs, docstrings, rationale comments) with no LLM needed. Second, video and audio files are transcribed locally with faster-whisper using a domain-aware prompt derived from corpus god nodes — transcripts are cached so re-runs are instant. Third, Claude subagents run in parallel over docs, papers, images, and transcripts to extract concepts, relationships, and design rationale. The results are merged into a NetworkX graph, clustered with Leiden community detection, and exported as interactive HTML, queryable JSON, and a plain-language audit report.
@@ -291,6 +323,88 @@ Works with any mix of file types:
 | Images | `.png .jpg .webp .gif` | Claude vision - screenshots, diagrams, any language |
 | Video / Audio | `.mp4 .mov .mkv .webm .avi .m4v .mp3 .wav .m4a .ogg` | Transcribed locally with faster-whisper, transcript fed into Claude extraction (requires `pip install graphifyy[video]`) |
 | YouTube / URLs | any video URL | Audio downloaded via yt-dlp, then same Whisper pipeline (requires `pip install graphifyy[video]`) |
+
+## Medical Domain Features (xyb)
+
+> **Note:** Medical features are provided via the `xyb` package (medical knowledge graph
+> extension). Import with `import xyb` or `from xyb import ...`. The original `graphify`
+> package remains unchanged.
+
+### Quick Start
+
+```bash
+# Initialize medical record directory structure
+python -m xyb medical init ~/medical_records/patient_001
+
+# Extract entities from medical text (requires LLM API key)
+python -m xyb medical scan "患者，女，52岁，乳腺癌，CA15-3 45 U/mL" --output graph.json
+
+# Generate a structured condition report
+python -m xyb medical report graph.json --format md
+
+# Start MCP server for AI assistant integration
+python -m xyb medical serve graph.json
+```
+
+### Medical CLI
+
+| Subcommand | Description |
+|------------|-------------|
+| `init <dir>` | Create 14-category standardized medical record structure |
+| `scan <text|file>` | Extract Patient, Diagnosis, Biomarker, Gene, Drug, Timeline via LLM |
+| `report <graph>` | Generate condition overview (Markdown/HTML) |
+| `serve <graph>` | Start MCP server exposing 10+ medical query tools |
+
+### MCP Tools
+
+`xyb medical serve` exposes:
+
+- `query_timeline` — filter events by date range
+- `get_gene_info` — mutations + targeted drug matches
+- `get_biomarker_trend` — time-series for CA19-9, CEA, etc.
+- `get_medication_history` — drugs with dates & side effects
+- `get_imaging_summary` — imaging exams + findings
+- `get_treatment_summary` — treatment phases summary
+- `search_records` — substring search across all nodes
+- `generate_report` — full structured report (md/html)
+- `graph_stats` — node/edge counts by type
+- `get_neighbors` — traverse from a node
+
+### Reports
+
+Generated reports include patient profile, diagnosis, genetics, biomarker trends,
+treatment timeline, and imaging history. Output as Markdown (default), HTML, or PDF.
+
+### Extraction Pipeline
+
+`xyb.extract_medical` supports:
+- **Text** — clinical notes (LLM extraction)
+- **Images** — screenshots (OCR + LLM)
+- **Excel** — structured lab tables
+
+Configure via `OPENAI_API_KEY` or `CLAUDE_API_KEY`.
+
+### Directory Structure
+
+`xyb medical init` creates:
+
+```
+patient_001/
+├── 00_说明与索引.md
+├── 01_人口统计学资料.md
+├── 02_主诉现病史.md
+├── 03_基因与病理详情/
+├── 04_治疗记录/
+├── 05_影像学检查/
+├── 06_检验指标与曲线/
+├── 07_随访记录/
+├── 08_并发症与毒性管理/
+├── 09_营养与心理支持/
+├── 10_多学科会诊/
+├── 11_知情同意与法律文件/
+├── 12_科研与数据共享/
+└── 13_家庭与社会支持/
+```
 
 ## Video and audio corpus
 

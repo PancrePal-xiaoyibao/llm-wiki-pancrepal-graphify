@@ -4,6 +4,33 @@ Routes files to the appropriate extractor based on file type,
 then optionally runs LLM-based entity extraction on raw text.
 """
 from __future__ import annotations
+# Re-export graphify.extract symbols for backward compatibility
+# (so `from xyb.extract import extract_python` works)
+from graphify.extract import (
+    extract as extract_general,  # noqa: F401
+    extract_python,
+    extract_js,
+    extract_java,
+    extract_c,
+    extract_cpp,
+    extract_go,
+    extract_rust,
+    extract_ruby,
+    extract_csharp,
+    extract_kotlin,
+    extract_scala,
+    extract_php,
+    extract_swift,
+    extract_julia,
+    extract_lua,
+    extract_objc,
+    extract_elixir,
+    extract_powershell,
+    extract_blade,
+    extract_dart,
+    collect_files,
+)
+
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +45,7 @@ def _make_id(*parts: str) -> str:
     return cleaned.strip("_").lower()[:80]
 
 
-def extract(path: Path, file_type: FileType, llm_client: Any = None) -> dict:
+def extract_medical(path: Path, file_type: FileType, llm_client: Any = None) -> dict:
     """Extract medical entities from a file based on its type.
 
     Returns dict with keys: nodes, edges, timeline_events, source_file.
@@ -166,3 +193,30 @@ def _empty_result(source_file: str, error: str | None = None) -> dict:
     if error:
         result["error"] = error
     return result
+
+def extract(
+    paths: list[Path] | Path,
+    file_type: FileType | None = None,
+    llm_client: Any = None,
+) -> dict:
+    """Unified extract entry point.
+
+    - If `paths` is a list: dispatch to graphify's general extractor.
+    - If `paths` is a single Path with `file_type`: use medical extractor.
+    """
+    from pathlib import Path as _Path
+
+    # Normalize to list
+    if isinstance(paths, (_Path, str)):
+        paths = [_Path(paths)]
+
+    # If file_type is not provided, we are in general mode
+    if file_type is None:
+        return extract_general(paths)
+
+    # Medical mode: single file with known type
+    if len(paths) == 1:
+        return extract_medical(paths[0], file_type, llm_client)
+
+    # Mixed: not supported
+    raise ValueError("Medical extract requires a single file with file_type")

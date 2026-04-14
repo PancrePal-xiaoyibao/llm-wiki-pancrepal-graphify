@@ -22,3 +22,11 @@ docs/superpowers/
 .vscode/
 openspec/
 uv.lock
+# Test files (excluded from git upload)
+tests/
+test_*.py
+
+# Temporary data directories
+test-mcp-data/
+worked/
+xyb.egg-info/

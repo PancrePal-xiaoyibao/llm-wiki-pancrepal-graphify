@@ -162,3 +162,9 @@ def build(extractions: list[dict], *, directed: bool = False) -> nx.Graph:
         combined["input_tokens"] += ext.get("input_tokens", 0)
         combined["output_tokens"] += ext.get("output_tokens", 0)
     return build_from_json(combined, directed=directed)
+# ========== Graphify compatibility layer ==========
+# Re-export graphify.build symbols for backward compatibility
+from graphify.build import (
+    build_from_json,
+    build,
+)

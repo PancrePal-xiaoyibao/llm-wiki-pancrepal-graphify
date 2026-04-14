@@ -822,3 +822,17 @@ def medication_risk_scan(G: nx.Graph) -> list[dict]:
                     })
 
     return results
+# ========== Graphify compatibility layer ==========
+# Re-export graphify.analyze symbols for backward compatibility
+from graphify.analyze import (
+    god_nodes,
+    surprising_connections,
+    suggest_questions,
+    graph_diff,
+)
+
+# _build_hypergraph may exist in graphify.analyze
+try:
+    from graphify.analyze import _build_hypergraph
+except ImportError:
+    _build_hypergraph = None

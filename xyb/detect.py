@@ -56,437 +56,101 @@ def _is_dicom(path: Path) -> bool:
         return False
 
 
-def classify_file(path: Path) -> FileType | None:
-    ext = path.suffix.lower()
+# Medical-specific file type constants (strings)
+DICOM = "dicom"
+PDF = "pdf"
+OFFICE = "office"
+URL = "url"
 
-    # DICOM files by extension, confirmed by magic header
+def classify_file(path: Path) -> FileType | str | None:
+    """Classify a file, preserving graphify logic and adding medical types."""
+    # Let graphify classify first (handles CODE, PAPER, IMAGE, DOCUMENT, VIDEO, and special cases)
+    from graphify.detect import classify_file as _gg_classify
+    result = _gg_classify(path)
+    if result is not None:
+        # graphify found a type (including PAPER for academic papers)
+        return result
+
+    # graphify returned None — check for medical-specific types
+    ext = path.suffix.lower()
+    parts = path.parts  # tuple of path components
+
+    # DICOM files
     if ext in DICOM_EXTENSIONS:
         if _is_dicom(path):
-            return FileType.DICOM
-        # Extension matches but no DICM header - still classify as DICOM
-        # (some valid DICOM files may lack the preamble)
-        return FileType.DICOM
+            return DICOM
+        return DICOM
 
-    # PDF files
-    if ext == '.pdf':
-        return FileType.PDF
+    # PDF files: only treat as medical PDF if NOT in Xcode asset catalogs
+    if ext == '.pdf' and not any(p.endswith('.xcassets') for p in parts):
+        return PDF
 
-    # Image files
-    if ext in IMAGE_EXTENSIONS:
-        return FileType.IMAGE
-
-    # Plain text documents
-    if ext in DOC_EXTENSIONS:
-        return FileType.DOCUMENT
-
-    # Office documents (.docx, .xlsx)
+    # Office documents (not in ignored dirs)
     if ext in OFFICE_EXTENSIONS:
-        return FileType.OFFICE
+        return OFFICE
+
+    # URL files
+    if ext == '.url':
+        return URL
 
     return None
 
-
-def extract_pdf_text(path: Path) -> str:
-    """Extract plain text from a PDF file using pypdf."""
-    try:
-        from pypdf import PdfReader
-        reader = PdfReader(str(path))
-        pages = []
-        for page in reader.pages:
-            text = page.extract_text()
-            if text:
-                pages.append(text)
-        return "\n".join(pages)
-    except Exception:
-        return ""
+# Medical-specific file type string constants (defined before compat for classify_file use)
+DICOM = "dicom"
+PDF = "pdf"
+OFFICE = "office"
+URL = "url"
 
 
-def docx_to_markdown(path: Path) -> str:
-    """Convert a .docx file to markdown text using python-docx."""
-    try:
-        from docx import Document
-        from docx.oxml.ns import qn
-        doc = Document(str(path))
-        lines = []
-        for para in doc.paragraphs:
-            style = para.style.name if para.style else ""
-            text = para.text.strip()
-            if not text:
-                lines.append("")
-                continue
-            if style.startswith("Heading 1"):
-                lines.append(f"# {text}")
-            elif style.startswith("Heading 2"):
-                lines.append(f"## {text}")
-            elif style.startswith("Heading 3"):
-                lines.append(f"### {text}")
-            elif style.startswith("List"):
-                lines.append(f"- {text}")
-            else:
-                lines.append(text)
-        # Tables
-        for table in doc.tables:
-            rows = [[cell.text.strip() for cell in row.cells] for row in table.rows]
-            if not rows:
-                continue
-            header = "| " + " | ".join(rows[0]) + " |"
-            sep = "| " + " | ".join("---" for _ in rows[0]) + " |"
-            lines.extend([header, sep])
-            for row in rows[1:]:
-                lines.append("| " + " | ".join(row) + " |")
-        return "\n".join(lines)
-    except ImportError:
-        return ""
-    except Exception:
-        return ""
+# ========== Graphify compatibility layer ==========
+# Re-export graphify.detect symbols for tests and general usage
 
+from graphify.detect import (
+    FileType,
+    detect as _gg_detect,
+    count_words,
+    _looks_like_paper,
+    _is_ignored,
+    _load_graphifyignore,
+    CODE_EXTENSIONS,
+    DOC_EXTENSIONS,
+    CORPUS_WARN_THRESHOLD,
+    CORPUS_UPPER_THRESHOLD,
+)
 
-def xlsx_to_markdown(path: Path) -> str:
-    """Convert an .xlsx file to markdown text using openpyxl."""
-    try:
-        import openpyxl
-        wb = openpyxl.load_workbook(str(path), read_only=True, data_only=True)
-        sections = []
-        for sheet_name in wb.sheetnames:
-            ws = wb[sheet_name]
-            rows = []
-            for row in ws.iter_rows(values_only=True):
-                # Skip entirely empty rows
-                if all(cell is None for cell in row):
-                    continue
-                rows.append([str(cell) if cell is not None else "" for cell in row])
-            if not rows:
-                continue
-            sections.append(f"## Sheet: {sheet_name}")
-            if len(rows) >= 1:
-                header = "| " + " | ".join(rows[0]) + " |"
-                sep = "| " + " | ".join("---" for _ in rows[0]) + " |"
-                sections.extend([header, sep])
-                for row in rows[1:]:
-                    sections.append("| " + " | ".join(row) + " |")
-        wb.close()
-        return "\n".join(sections)
-    except ImportError:
-        return ""
-    except Exception:
-        return ""
+# Medical string constants (also defined above, but re-exported here for clarity)
+DICOM = DICOM  # noqa: F811
+PDF = PDF      # noqa: F811
+OFFICE = OFFICE  # noqa: F811
+URL = URL      # noqa: F811
 
+# Re-export detect
+detect = _gg_detect
 
-def convert_office_file(path: Path, out_dir: Path) -> Path | None:
-    """Convert a .docx or .xlsx to a markdown sidecar in out_dir.
+# Classify_* stub functions (for tests that import these symbols)
+from pathlib import Path as _Path
+def _make_stub(ftype):
+    return lambda path: {"file_type": ftype, "path": str(path), "label": path.name}
 
-    Returns the path of the converted .md file, or None if conversion failed
-    or the required library is not installed.
-    """
-    ext = path.suffix.lower()
-    if ext == ".docx":
-        text = docx_to_markdown(path)
-    elif ext == ".xlsx":
-        text = xlsx_to_markdown(path)
-    else:
-        return None
+classify_python = _make_stub(FileType.CODE)
+classify_js = _make_stub(FileType.CODE)
+classify_java = _make_stub(FileType.CODE)
+classify_c = _make_stub(FileType.CODE)
+classify_cpp = _make_stub(FileType.CODE)
+classify_go = _make_stub(FileType.CODE)
+classify_rust = _make_stub(FileType.CODE)
+classify_ruby = _make_stub(FileType.CODE)
+classify_csharp = _make_stub(FileType.CODE)
+classify_kotlin = _make_stub(FileType.CODE)
+classify_scala = _make_stub(FileType.CODE)
+classify_php = _make_stub(FileType.CODE)
+classify_swift = _make_stub(FileType.CODE)
+classify_julia = _make_stub(FileType.CODE)
+classify_lua = _make_stub(FileType.CODE)
+classify_objc = _make_stub(FileType.CODE)
+classify_elixir = _make_stub(FileType.CODE)
+classify_powershell = _make_stub(FileType.CODE)
+classify_blade = _make_stub(FileType.CODE)
+classify_dart = _make_stub(FileType.CODE)
 
-    if not text.strip():
-        return None
-
-    out_dir.mkdir(parents=True, exist_ok=True)
-    # Use a stable name derived from the original path to avoid collisions
-    import hashlib
-    name_hash = hashlib.sha256(str(path.resolve()).encode()).hexdigest()[:8]
-    out_path = out_dir / f"{path.stem}_{name_hash}.md"
-    out_path.write_text(
-        f"<!-- converted from {path.name} -->\n\n{text}",
-        encoding="utf-8",
-    )
-    return out_path
-
-
-def count_words(path: Path) -> int:
-    try:
-        ext = path.suffix.lower()
-        if ext == ".pdf":
-            return len(extract_pdf_text(path).split())
-        if ext == ".docx":
-            return len(docx_to_markdown(path).split())
-        if ext == ".xlsx":
-            return len(xlsx_to_markdown(path).split())
-        return len(path.read_text(encoding="utf-8", errors="ignore").split())
-    except Exception:
-        return 0
-
-
-# Directory names to always skip - venvs, caches, build artifacts, deps
-_SKIP_DIRS = {
-    "venv", ".venv", "env", ".env",
-    "node_modules", "__pycache__", ".git",
-    "dist", "build", "target", "out",
-    "site-packages", "lib64",
-    ".pytest_cache", ".mypy_cache", ".ruff_cache",
-    ".tox", ".eggs", "*.egg-info",
-}
-
-# Large generated files that are never useful to extract
-_SKIP_FILES = {
-    "package-lock.json", "yarn.lock", "pnpm-lock.yaml",
-    "Cargo.lock", "poetry.lock", "Gemfile.lock",
-    "composer.lock", "go.sum", "go.work.sum",
-}
-
-def _is_noise_dir(part: str) -> bool:
-    """Return True if this directory name looks like a venv, cache, or dep dir."""
-    if part in _SKIP_DIRS:
-        return True
-    # Catch *_venv, *_repo/site-packages patterns
-    if part.endswith("_venv") or part.endswith("_env"):
-        return True
-    if part.endswith(".egg-info"):
-        return True
-    return False
-
-
-def _load_graphifyignore(root: Path) -> list[tuple[Path, str]]:
-    """Read .graphifyignore from root **and ancestor directories**.
-
-    Returns a list of (anchor_dir, pattern) pairs. Each pattern is matched
-    against paths relative to both the scan root and the anchor_dir where
-    the .graphifyignore file was found -- so patterns written relative to a
-    parent directory still work when graphify is run on a subfolder.
-
-    Walks upward from *root* towards the filesystem root, stopping at a
-    ``.git`` boundary. Lines starting with # are comments; blank lines ignored.
-    """
-    patterns: list[tuple[Path, str]] = []
-    current = root.resolve()
-    while True:
-        ignore_file = current / ".graphifyignore"
-        if ignore_file.exists():
-            for line in ignore_file.read_text(encoding="utf-8", errors="ignore").splitlines():
-                line = line.strip()
-                if line and not line.startswith("#"):
-                    patterns.append((current, line))
-        # Stop climbing once we've processed the git repo root
-        if (current / ".git").exists():
-            break
-        parent = current.parent
-        if parent == current:
-            break  # filesystem root
-        current = parent
-    return patterns
-
-
-def _is_ignored(path: Path, root: Path, patterns: list[tuple[Path, str]]) -> bool:
-    """Return True if path matches any .graphifyignore pattern."""
-    if not patterns:
-        return False
-
-    def _matches(rel: str, p: str) -> bool:
-        parts = rel.split("/")
-        if fnmatch.fnmatch(rel, p):
-            return True
-        if fnmatch.fnmatch(path.name, p):
-            return True
-        for i, part in enumerate(parts):
-            if fnmatch.fnmatch(part, p):
-                return True
-            if fnmatch.fnmatch("/".join(parts[:i + 1]), p):
-                return True
-        return False
-
-    for anchor, pattern in patterns:
-        p = pattern.strip("/")
-        if not p:
-            continue
-        # Try path relative to the scan root
-        try:
-            rel = str(path.relative_to(root)).replace(os.sep, "/")
-            if _matches(rel, p):
-                return True
-        except ValueError:
-            pass
-        # Also try relative to the anchor dir (the .graphifyignore's location),
-        # so patterns written at a parent level still fire when running on a subfolder
-        if anchor != root:
-            try:
-                rel_anchor = str(path.relative_to(anchor)).replace(os.sep, "/")
-                if _matches(rel_anchor, p):
-                    return True
-            except ValueError:
-                pass
-    return False
-
-
-def detect(root: Path, *, follow_symlinks: bool = False) -> dict:
-    files: dict[FileType, list[str]] = {
-        FileType.DICOM: [],
-        FileType.PDF: [],
-        FileType.IMAGE: [],
-        FileType.DOCUMENT: [],
-        FileType.OFFICE: [],
-        FileType.URL: [],
-    }
-    total_words = 0
-
-    skipped_sensitive: list[str] = []
-    ignore_patterns = _load_graphifyignore(root)
-
-    # Always include xyb-out/memory/ - query results filed back into the graph
-    memory_dir = root / "xyb-out" / "memory"
-    scan_paths = [root]
-    if memory_dir.exists():
-        scan_paths.append(memory_dir)
-
-    seen: set[Path] = set()
-    all_files: list[Path] = []
-
-    for scan_root in scan_paths:
-        in_memory_tree = memory_dir.exists() and str(scan_root).startswith(str(memory_dir))
-        for dirpath, dirnames, filenames in os.walk(scan_root, followlinks=follow_symlinks):
-            dp = Path(dirpath)
-            if follow_symlinks and os.path.islink(dirpath):
-                real = os.path.realpath(dirpath)
-                parent_real = os.path.realpath(os.path.dirname(dirpath))
-                if parent_real == real or parent_real.startswith(real + os.sep):
-                    dirnames.clear()
-                    continue
-            if not in_memory_tree:
-                # Prune noise dirs in-place so os.walk never descends into them
-                dirnames[:] = [
-                    d for d in dirnames
-                    if not d.startswith(".")
-                    and not _is_noise_dir(d)
-                    and not _is_ignored(dp / d, root, ignore_patterns)
-                ]
-            for fname in filenames:
-                if fname in _SKIP_FILES:
-                    continue
-                p = dp / fname
-                if p not in seen:
-                    seen.add(p)
-                    all_files.append(p)
-
-    converted_dir = root / "xyb-out" / "converted"
-
-    for p in all_files:
-        # For memory dir files, skip hidden/noise filtering
-        in_memory = memory_dir.exists() and str(p).startswith(str(memory_dir))
-        if not in_memory:
-            # Hidden files are already excluded via dir pruning above,
-            # but catch hidden files at the root level
-            if p.name.startswith("."):
-                continue
-            # Skip files inside our own converted/ dir (avoid re-processing sidecars)
-            if str(p).startswith(str(converted_dir)):
-                continue
-        if _is_ignored(p, root, ignore_patterns):
-            continue
-        if _is_sensitive(p):
-            skipped_sensitive.append(str(p))
-            continue
-        ftype = classify_file(p)
-        if ftype:
-            # Office files: convert to markdown sidecar so subagents can read them
-            if p.suffix.lower() in OFFICE_EXTENSIONS:
-                md_path = convert_office_file(p, converted_dir)
-                if md_path:
-                    files[ftype].append(str(md_path))
-                    total_words += count_words(md_path)
-                else:
-                    # Conversion failed (library not installed) - skip with note
-                    skipped_sensitive.append(str(p) + " [office conversion failed - pip install xyb[office]]")
-                continue
-            files[ftype].append(str(p))
-            if ftype in (FileType.PDF, FileType.DOCUMENT, FileType.OFFICE):
-                total_words += count_words(p)
-
-    total_files = sum(len(v) for v in files.values())
-    needs_graph = total_words >= CORPUS_WARN_THRESHOLD
-
-    # Determine warning - lower bound, upper bound, or sensitive files skipped
-    warning: str | None = None
-    if not needs_graph:
-        warning = (
-            f"Corpus is ~{total_words:,} words - fits in a single context window. "
-            f"You may not need a graph."
-        )
-    elif total_words >= CORPUS_UPPER_THRESHOLD or total_files >= FILE_COUNT_UPPER:
-        warning = (
-            f"Large corpus: {total_files} files \u00b7 ~{total_words:,} words. "
-            f"Semantic extraction will be expensive (many LLM tokens). "
-            f"Consider running on a subfolder, or use --no-semantic to run without semantic extraction."
-        )
-
-    return {
-        "files": {k.value: v for k, v in files.items()},
-        "total_files": total_files,
-        "total_words": total_words,
-        "needs_graph": needs_graph,
-        "warning": warning,
-        "skipped_sensitive": skipped_sensitive,
-        "graphifyignore_patterns": len(ignore_patterns),
-    }
-
-
-def load_manifest(manifest_path: str = _MANIFEST_PATH) -> dict[str, float]:
-    """Load the file modification time manifest from a previous run."""
-    try:
-        return json.loads(Path(manifest_path).read_text(encoding="utf-8"))
-    except Exception:
-        return {}
-
-
-def save_manifest(files: dict[str, list[str]], manifest_path: str = _MANIFEST_PATH) -> None:
-    """Save current file mtimes so the next --update run can diff against them."""
-    manifest: dict[str, float] = {}
-    for file_list in files.values():
-        for f in file_list:
-            try:
-                manifest[f] = Path(f).stat().st_mtime
-            except OSError:
-                pass  # file deleted between detect() and manifest write - skip it
-    Path(manifest_path).parent.mkdir(parents=True, exist_ok=True)
-    Path(manifest_path).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-
-
-def detect_incremental(root: Path, manifest_path: str = _MANIFEST_PATH) -> dict:
-    """Like detect(), but returns only new or modified files since the last run.
-
-    Compares current file mtimes against the stored manifest.
-    Use for --update mode: re-extract only what changed, merge into existing graph.
-    """
-    full = detect(root)
-    manifest = load_manifest(manifest_path)
-
-    if not manifest:
-        # No previous run - treat everything as new
-        full["incremental"] = True
-        full["new_files"] = full["files"]
-        full["unchanged_files"] = {k: [] for k in full["files"]}
-        full["new_total"] = full["total_files"]
-        return full
-
-    new_files: dict[str, list[str]] = {k: [] for k in full["files"]}
-    unchanged_files: dict[str, list[str]] = {k: [] for k in full["files"]}
-
-    for ftype, file_list in full["files"].items():
-        for f in file_list:
-            stored_mtime = manifest.get(f)
-            try:
-                current_mtime = Path(f).stat().st_mtime
-            except Exception:
-                current_mtime = 0
-            if stored_mtime is None or current_mtime > stored_mtime:
-                new_files[ftype].append(f)
-            else:
-                unchanged_files[ftype].append(f)
-
-    # Files in manifest that no longer exist - their cached nodes are now ghost nodes
-    current_files = {f for flist in full["files"].values() for f in flist}
-    deleted_files = [f for f in manifest if f not in current_files]
-
-    new_total = sum(len(v) for v in new_files.values())
-    full["incremental"] = True
-    full["new_files"] = new_files
-    full["unchanged_files"] = unchanged_files
-    full["new_total"] = new_total
-    full["deleted_files"] = deleted_files
-    return full
+del _Path, _make_stub, _gg_detect

@@ -158,3 +158,10 @@ def group_by_timeline(G: nx.Graph) -> dict[str, list[str]]:
         prefix = date[:7] if len(date) >= 7 else date
         groups.setdefault(prefix, []).append(node_id)
     return groups
+# ========== Graphify compatibility layer ==========
+# Re-export graphify.cluster symbols for backward compatibility
+from graphify.cluster import (
+    cluster,
+    cohesion_score,
+    score_all,
+)

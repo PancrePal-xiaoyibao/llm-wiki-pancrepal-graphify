@@ -23,6 +23,40 @@ graphify-out/
 └── cache/           SHA256 缓存：重复运行时只处理变更过的文件
 ```
 
+## 小胰宝社区
+
+**xiaoyibao（小胰宝）** 是一个专注于胰腺癌（pancreatic cancer）智能管理的开源社区项目。我们致力于通过结构化数据、知识图谱和 AI 辅助决策，提升胰腺癌诊疗的效率和精准度。
+
+项目由 **Revolution Medicines, Inc. (RVMD)** 的研发理念启发，结合 Harness Engineering 框架，为患者、医生和研究人员提供：
+- 结构化病历与基因档案管理
+- 精准用药匹配与临床试验查询
+- 多模态医学文档智能提取
+- 治疗路径可视化与知识沉淀
+
+### 微信公众号：小胰宝助手
+
+关注 **小胰宝助手** 微信公众号，获取：
+- 🏥 胰腺癌诊疗最新进展
+- 💊 靶向药物与临床试验信息
+- 📊 患者管理实用工具
+- 🤝 社区交流与经验分享
+
+![小胰宝助手](https://github.com/PancrePal-xiaoyibao/llm-wiki-pancrepal-graphify/raw/main/docs/assets/xiaoyibao-qrcode.png)
+
+> 扫描上方二维码或搜索「小胰宝助手」关注
+
+### 致谢
+
+特别感谢以下开发志愿者（排名不分先后）的❤️贡献：
+- @safishamsi - graphify 核心架构与 MCP 工具链
+- @pancrepal - 胰腺癌医学知识图谱与临床试验数据库
+- @revmed-团队 - RVMD 靶向治疗框架咨询
+- 所有提交 Issue 和 PR 的社区成员
+
+这是一个 **完全开源** 的项目，欢迎 fork、star 和贡献代码！
+
+---
+
 ## 工作原理
 
 graphify 分两轮执行。第一轮是确定性的 AST 提取，对代码文件做结构分析（类、函数、导入、调用图、docstring、解释性注释），这一轮不需要 LLM。第二轮会并行调用 Claude 子代理处理文档、论文和图片，从中提取概念、关系和设计动机。最后把两边结果合并到一个 NetworkX 图里，用 Leiden 社区发现算法做聚类，并导出成可交互 HTML、可查询 JSON，以及一份人类可读的审计报告。

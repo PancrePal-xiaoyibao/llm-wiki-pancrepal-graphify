@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xyb"
-version = "0.4.12"
+version = "1.0.0"
 description = "Oncology patient document organizer - turn any folder of medical documents into a queryable knowledge graph for tumor patients"
 readme = "README.md"
 license = { file = "LICENSE" }
