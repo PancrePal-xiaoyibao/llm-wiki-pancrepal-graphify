@@ -65,7 +65,7 @@ Follow these steps in order. Do not skip steps.
 python -c "import xiaoyibao" 2>$null
 if ($LASTEXITCODE -ne 0) { pip install xyb -q 2>&1 | Select-Object -Last 3 }
 # Write interpreter path for all subsequent steps
-python -c "import sys; open('.graphify_python', 'w').write(sys.executable)"
+python -c "import sys; open('.xiaoyibao_python', 'w').write(sys.executable)"
 ```
 
 If the import succeeds, print nothing and move straight to Step 2.
@@ -79,7 +79,7 @@ from xiaoyibao.detect import detect
 from pathlib import Path
 result = detect(Path('INPUT_PATH'))
 print(json.dumps(result))
-" > .graphify_detect.json
+" > .xiaoyibao_detect.json
 ```
 
 Replace INPUT_PATH with the actual path the user provided. Do NOT cat or print the JSON - read it silently and present a clean summary instead:
@@ -123,22 +123,22 @@ Set it as `$env:XIAOYIBAO_WHISPER_PROMPT` before running the transcription comma
 **Step 2 - Transcribe (PowerShell):**
 
 ```powershell
-& (Get-Content xiaoyibao-out\.graphify_python) -c "
+& (Get-Content xiaoyibao-out\.xiaoyibao_python) -c "
 import json, os
 from pathlib import Path
 from xiaoyibao.transcribe import transcribe_all
 
-detect = json.loads(Path('xiaoyibao-out/.graphify_detect.json').read_text())
+detect = json.loads(Path('xiaoyibao-out/.xiaoyibao_detect.json').read_text())
 video_files = detect.get('files', {}).get('video', [])
 prompt = os.environ.get('XIAOYIBAO_WHISPER_PROMPT', 'Use proper punctuation and paragraph breaks.')
 
 transcript_paths = transcribe_all(video_files, initial_prompt=prompt)
 print(json.dumps(transcript_paths))
-" | Out-File -FilePath xiaoyibao-out\.graphify_transcripts.json -Encoding utf8
+" | Out-File -FilePath xiaoyibao-out\.xiaoyibao_transcripts.json -Encoding utf8
 ```
 
 After transcription:
-- Read the transcript paths from `xiaoyibao-out\.graphify_transcripts.json`
+- Read the transcript paths from `xiaoyibao-out\.xiaoyibao_transcripts.json`
 - Add them to the docs list before dispatching semantic subagents in Step 3B
 - Print how many transcripts were created: `Transcribed N video file(s) -> treating as docs`
 - If transcription fails for a file, print a warning and continue with the rest
@@ -167,16 +167,16 @@ from pathlib import Path
 import json
 
 code_files = []
-detect = json.loads(Path('.graphify_detect.json').read_text())
+detect = json.loads(Path('.xiaoyibao_detect.json').read_text())
 for f in detect.get('files', {}).get('code', []):
     code_files.extend(collect_files(Path(f)) if Path(f).is_dir() else [Path(f)])
 
 if code_files:
     result = extract(code_files)
-    Path('.graphify_ast.json').write_text(json.dumps(result, indent=2))
+    Path('.xiaoyibao_ast.json').write_text(json.dumps(result, indent=2))
     print(f'AST: {len(result[\"nodes\"])} nodes, {len(result[\"edges\"])} edges')
 else:
-    Path('.graphify_ast.json').write_text(json.dumps({'nodes':[],'edges':[],'input_tokens':0,'output_tokens':0}))
+    Path('.xiaoyibao_ast.json').write_text(json.dumps({'nodes':[],'edges':[],'input_tokens':0,'output_tokens':0}))
     print('No code files - skipping AST extraction')
 "
 ```
@@ -188,7 +188,7 @@ else:
 **MANDATORY: You MUST use the Agent tool here. Reading files yourself one-by-one is forbidden - it is 5-10x slower. If you do not use the Agent tool you are doing this wrong.**
 
 Before dispatching subagents, print a timing estimate:
-- Load `total_words` and file counts from `.graphify_detect.json`
+- Load `total_words` and file counts from `.xiaoyibao_detect.json`
 - Estimate agents needed: `ceil(uncached_non_code_files / 22)` (chunk size is 20-25)
 - Estimate time: ~45s per agent batch (they run in parallel, so total ≈ 45s × ceil(agents/parallel_limit))
 - Print: "Semantic extraction: ~N files → X agents, estimated ~Ys"
@@ -203,23 +203,23 @@ import json
 from xiaoyibao.cache import check_semantic_cache
 from pathlib import Path
 
-detect = json.loads(Path('.graphify_detect.json').read_text())
+detect = json.loads(Path('.xiaoyibao_detect.json').read_text())
 all_files = [f for files in detect['files'].values() for f in files]
 
 cached_nodes, cached_edges, cached_hyperedges, uncached = check_semantic_cache(all_files)
 
 if cached_nodes or cached_edges or cached_hyperedges:
-    Path('.graphify_cached.json').write_text(json.dumps({'nodes': cached_nodes, 'edges': cached_edges, 'hyperedges': cached_hyperedges}))
-Path('.graphify_uncached.txt').write_text('\n'.join(uncached))
+    Path('.xiaoyibao_cached.json').write_text(json.dumps({'nodes': cached_nodes, 'edges': cached_edges, 'hyperedges': cached_hyperedges}))
+Path('.xiaoyibao_uncached.txt').write_text('\n'.join(uncached))
 print(f'Cache: {len(all_files)-len(uncached)} files hit, {len(uncached)} files need extraction')
 "
 ```
 
-Only dispatch subagents for files listed in `.graphify_uncached.txt`. If all files are cached, skip to Part C directly.
+Only dispatch subagents for files listed in `.xiaoyibao_uncached.txt`. If all files are cached, skip to Part C directly.
 
 **Step B1 - Split into chunks**
 
-Load files from `.graphify_uncached.txt`. Split into chunks of 20-25 files each. Each image gets its own chunk (vision needs separate context).
+Load files from `.xiaoyibao_uncached.txt`. Split into chunks of 20-25 files each. Each image gets its own chunk (vision needs separate context).
 
 **Step B2 - Dispatch ALL subagents in a single message**
 
@@ -291,7 +291,7 @@ Output exactly this JSON (no other text):
 **Step B3 - Collect, cache, and merge**
 
 Wait for all subagents. For each result:
-- Check that `xiaoyibao-out/.graphify_chunk_NN.json` exists on disk — this is the success signal
+- Check that `xiaoyibao-out/.xiaoyibao_chunk_NN.json` exists on disk — this is the success signal
 - If the file exists and contains valid JSON with `nodes` and `edges`, include it and save to cache
 - If the file is missing, the subagent was likely dispatched as read-only (Explore type) — print a warning: "chunk N missing from disk — subagent may have been read-only. Re-run with general-purpose agent." Do not silently skip.
 - If a subagent failed or returned invalid JSON, print a warning and skip that chunk - do not abort
@@ -305,20 +305,20 @@ import json
 from xiaoyibao.cache import save_semantic_cache
 from pathlib import Path
 
-new = json.loads(Path('.graphify_semantic_new.json').read_text()) if Path('.graphify_semantic_new.json').exists() else {'nodes':[],'edges':[],'hyperedges':[]}
+new = json.loads(Path('.xiaoyibao_semantic_new.json').read_text()) if Path('.xiaoyibao_semantic_new.json').exists() else {'nodes':[],'edges':[],'hyperedges':[]}
 saved = save_semantic_cache(new.get('nodes', []), new.get('edges', []), new.get('hyperedges', []))
 print(f'Cached {saved} files')
 "
 ```
 
-Merge cached + new results into `.graphify_semantic.json`:
+Merge cached + new results into `.xiaoyibao_semantic.json`:
 ```powershell
 python -c "
 import json
 from pathlib import Path
 
-cached = json.loads(Path('.graphify_cached.json').read_text()) if Path('.graphify_cached.json').exists() else {'nodes':[],'edges':[],'hyperedges':[]}
-new = json.loads(Path('.graphify_semantic_new.json').read_text()) if Path('.graphify_semantic_new.json').exists() else {'nodes':[],'edges':[],'hyperedges':[]}
+cached = json.loads(Path('.xiaoyibao_cached.json').read_text()) if Path('.xiaoyibao_cached.json').exists() else {'nodes':[],'edges':[],'hyperedges':[]}
+new = json.loads(Path('.xiaoyibao_semantic_new.json').read_text()) if Path('.xiaoyibao_semantic_new.json').exists() else {'nodes':[],'edges':[],'hyperedges':[]}
 
 all_nodes = cached['nodes'] + new.get('nodes', [])
 all_edges = cached['edges'] + new.get('edges', [])
@@ -337,11 +337,11 @@ merged = {
     'input_tokens': new.get('input_tokens', 0),
     'output_tokens': new.get('output_tokens', 0),
 }
-Path('.graphify_semantic.json').write_text(json.dumps(merged, indent=2))
+Path('.xiaoyibao_semantic.json').write_text(json.dumps(merged, indent=2))
 print(f'Extraction complete - {len(deduped)} nodes, {len(all_edges)} edges ({len(cached[\"nodes\"])} from cache, {len(new.get(\"nodes\",[]))} new)')
 "
 ```
-Clean up temp files: `Remove-Item -ErrorAction SilentlyContinue .graphify_cached.json, .graphify_uncached.txt, .graphify_semantic_new.json`
+Clean up temp files: `Remove-Item -ErrorAction SilentlyContinue .xiaoyibao_cached.json, .xiaoyibao_uncached.txt, .xiaoyibao_semantic_new.json`
 
 #### Part C - Merge AST + semantic into final extraction
 
@@ -350,8 +350,8 @@ python -c "
 import sys, json
 from pathlib import Path
 
-ast = json.loads(Path('.graphify_ast.json').read_text())
-sem = json.loads(Path('.graphify_semantic.json').read_text())
+ast = json.loads(Path('.xiaoyibao_ast.json').read_text())
+sem = json.loads(Path('.xiaoyibao_semantic.json').read_text())
 
 # Merge: AST nodes first, semantic nodes deduplicated by id
 seen = {n['id'] for n in ast['nodes']}
@@ -370,7 +370,7 @@ merged = {
     'input_tokens': sem.get('input_tokens', 0),
     'output_tokens': sem.get('output_tokens', 0),
 }
-Path('.graphify_extract.json').write_text(json.dumps(merged, indent=2))
+Path('.xiaoyibao_extract.json').write_text(json.dumps(merged, indent=2))
 total = len(merged_nodes)
 edges = len(merged_edges)
 print(f'Merged: {total} nodes, {edges} edges ({len(ast[\"nodes\"])} AST + {len(sem[\"nodes\"])} semantic)')
@@ -390,8 +390,8 @@ from xiaoyibao.report import generate
 from xiaoyibao.export import to_json
 from pathlib import Path
 
-extraction = json.loads(Path('.graphify_extract.json').read_text())
-detection  = json.loads(Path('.graphify_detect.json').read_text())
+extraction = json.loads(Path('.xiaoyibao_extract.json').read_text())
+detection  = json.loads(Path('.xiaoyibao_detect.json').read_text())
 
 G = build_from_json(extraction)
 communities = cluster(G)
@@ -414,7 +414,7 @@ analysis = {
     'surprises': surprises,
     'questions': questions,
 }
-Path('.graphify_analysis.json').write_text(json.dumps(analysis, indent=2))
+Path('.xiaoyibao_analysis.json').write_text(json.dumps(analysis, indent=2))
 if G.number_of_nodes() == 0:
     print('ERROR: Graph is empty - extraction produced no nodes.')
     print('Possible causes: all files were skipped, binary-only corpus, or extraction failed.')
@@ -429,7 +429,7 @@ Replace INPUT_PATH with the actual path.
 
 ### Step 5 - Label communities
 
-Read `.graphify_analysis.json`. For each community key, look at its node labels and write a 2-5 word plain-language name (e.g. "Attention Mechanism", "Training Pipeline", "Data Loading").
+Read `.xiaoyibao_analysis.json`. For each community key, look at its node labels and write a 2-5 word plain-language name (e.g. "Attention Mechanism", "Training Pipeline", "Data Loading").
 
 Then regenerate the report and save the labels for the visualizer:
 
@@ -442,9 +442,9 @@ from xiaoyibao.analyze import god_nodes, surprising_connections, suggest_questio
 from xiaoyibao.report import generate
 from pathlib import Path
 
-extraction = json.loads(Path('.graphify_extract.json').read_text())
-detection  = json.loads(Path('.graphify_detect.json').read_text())
-analysis   = json.loads(Path('.graphify_analysis.json').read_text())
+extraction = json.loads(Path('.xiaoyibao_extract.json').read_text())
+detection  = json.loads(Path('.xiaoyibao_detect.json').read_text())
+analysis   = json.loads(Path('.xiaoyibao_analysis.json').read_text())
 
 G = build_from_json(extraction)
 communities = {int(k): v for k, v in analysis['communities'].items()}
@@ -459,7 +459,7 @@ questions = suggest_questions(G, communities, labels)
 
 report = generate(G, communities, cohesion, labels, analysis['gods'], analysis['surprises'], detection, tokens, 'INPUT_PATH', suggested_questions=questions)
 Path('xiaoyibao-out/GRAPH_REPORT.md').write_text(report)
-Path('.graphify_labels.json').write_text(json.dumps({str(k): v for k, v in labels.items()}))
+Path('.xiaoyibao_labels.json').write_text(json.dumps({str(k): v for k, v in labels.items()}))
 print('Report updated with community labels')
 "
 ```
@@ -482,9 +482,9 @@ from xiaoyibao.build import build_from_json
 from xiaoyibao.export import to_obsidian, to_canvas
 from pathlib import Path
 
-extraction = json.loads(Path('.graphify_extract.json').read_text())
-analysis   = json.loads(Path('.graphify_analysis.json').read_text())
-labels_raw = json.loads(Path('.graphify_labels.json').read_text()) if Path('.graphify_labels.json').exists() else {}
+extraction = json.loads(Path('.xiaoyibao_extract.json').read_text())
+analysis   = json.loads(Path('.xiaoyibao_analysis.json').read_text())
+labels_raw = json.loads(Path('.xiaoyibao_labels.json').read_text()) if Path('.xiaoyibao_labels.json').exists() else {}
 
 G = build_from_json(extraction)
 communities = {int(k): v for k, v in analysis['communities'].items()}
@@ -515,9 +515,9 @@ from xiaoyibao.build import build_from_json
 from xiaoyibao.export import to_html
 from pathlib import Path
 
-extraction = json.loads(Path('.graphify_extract.json').read_text())
-analysis   = json.loads(Path('.graphify_analysis.json').read_text())
-labels_raw = json.loads(Path('.graphify_labels.json').read_text()) if Path('.graphify_labels.json').exists() else {}
+extraction = json.loads(Path('.xiaoyibao_extract.json').read_text())
+analysis   = json.loads(Path('.xiaoyibao_analysis.json').read_text())
+labels_raw = json.loads(Path('.xiaoyibao_labels.json').read_text()) if Path('.xiaoyibao_labels.json').exists() else {}
 
 G = build_from_json(extraction)
 communities = {int(k): v for k, v in analysis['communities'].items()}
@@ -542,7 +542,7 @@ from xiaoyibao.build import build_from_json
 from xiaoyibao.export import to_cypher
 from pathlib import Path
 
-G = build_from_json(json.loads(Path('.graphify_extract.json').read_text()))
+G = build_from_json(json.loads(Path('.xiaoyibao_extract.json').read_text()))
 to_cypher(G, 'xiaoyibao-out/cypher.txt')
 print('cypher.txt written - import with: cypher-shell < xiaoyibao-out/cypher.txt')
 "
@@ -558,8 +558,8 @@ from xiaoyibao.cluster import cluster
 from xiaoyibao.export import push_to_neo4j
 from pathlib import Path
 
-extraction = json.loads(Path('.graphify_extract.json').read_text())
-analysis   = json.loads(Path('.graphify_analysis.json').read_text())
+extraction = json.loads(Path('.xiaoyibao_extract.json').read_text())
+analysis   = json.loads(Path('.xiaoyibao_analysis.json').read_text())
 G = build_from_json(extraction)
 communities = {int(k): v for k, v in analysis['communities'].items()}
 
@@ -579,9 +579,9 @@ from xiaoyibao.build import build_from_json
 from xiaoyibao.export import to_svg
 from pathlib import Path
 
-extraction = json.loads(Path('.graphify_extract.json').read_text())
-analysis   = json.loads(Path('.graphify_analysis.json').read_text())
-labels_raw = json.loads(Path('.graphify_labels.json').read_text()) if Path('.graphify_labels.json').exists() else {}
+extraction = json.loads(Path('.xiaoyibao_extract.json').read_text())
+analysis   = json.loads(Path('.xiaoyibao_analysis.json').read_text())
+labels_raw = json.loads(Path('.xiaoyibao_labels.json').read_text()) if Path('.xiaoyibao_labels.json').exists() else {}
 
 G = build_from_json(extraction)
 communities = {int(k): v for k, v in analysis['communities'].items()}
@@ -601,8 +601,8 @@ from xiaoyibao.build import build_from_json
 from xiaoyibao.export import to_graphml
 from pathlib import Path
 
-extraction = json.loads(Path('.graphify_extract.json').read_text())
-analysis   = json.loads(Path('.graphify_analysis.json').read_text())
+extraction = json.loads(Path('.xiaoyibao_extract.json').read_text())
+analysis   = json.loads(Path('.xiaoyibao_analysis.json').read_text())
 
 G = build_from_json(extraction)
 communities = {int(k): v for k, v in analysis['communities'].items()}
@@ -634,7 +634,7 @@ To configure in Claude Desktop, add to `claude_desktop_config.json`:
 
 ### Step 8 - Token reduction benchmark (only if total_words > 5000)
 
-If `total_words` from `.graphify_detect.json` is greater than 5,000, run:
+If `total_words` from `.xiaoyibao_detect.json` is greater than 5,000, run:
 
 ```powershell
 python -c "
@@ -642,7 +642,7 @@ import json
 from xiaoyibao.benchmark import run_benchmark, print_benchmark
 from pathlib import Path
 
-detection = json.loads(Path('.graphify_detect.json').read_text())
+detection = json.loads(Path('.xiaoyibao_detect.json').read_text())
 result = run_benchmark('xiaoyibao-out/graph.json', corpus_words=detection['total_words'])
 print_benchmark(result)
 "
@@ -662,11 +662,11 @@ from datetime import datetime, timezone
 from xiaoyibao.detect import save_manifest
 
 # Save manifest for --update
-detect = json.loads(Path('.graphify_detect.json').read_text())
+detect = json.loads(Path('.xiaoyibao_detect.json').read_text())
 save_manifest(detect['files'])
 
 # Update cumulative cost tracker
-extract = json.loads(Path('.graphify_extract.json').read_text())
+extract = json.loads(Path('.xiaoyibao_extract.json').read_text())
 input_tok = extract.get('input_tokens', 0)
 output_tok = extract.get('output_tokens', 0)
 
@@ -689,7 +689,7 @@ cost_path.write_text(json.dumps(cost, indent=2))
 print(f'This run: {input_tok:,} input tokens, {output_tok:,} output tokens')
 print(f'All time: {cost[\"total_input_tokens\"]:,} input, {cost[\"total_output_tokens\"]:,} output ({len(cost[\"runs\"])} runs)')
 "
-Remove-Item -ErrorAction SilentlyContinue .graphify_detect.json, .graphify_extract.json, .graphify_ast.json, .graphify_semantic.json, .graphify_analysis.json, .graphify_labels.json
+Remove-Item -ErrorAction SilentlyContinue .xiaoyibao_detect.json, .xiaoyibao_extract.json, .xiaoyibao_ast.json, .xiaoyibao_semantic.json, .xiaoyibao_analysis.json, .xiaoyibao_labels.json
 Remove-Item -ErrorAction SilentlyContinue xiaoyibao-out/.needs_update
 ```
 
@@ -737,7 +737,7 @@ from pathlib import Path
 result = detect_incremental(Path('INPUT_PATH'))
 new_total = result.get('new_total', 0)
 print(json.dumps(result, indent=2))
-Path('.graphify_incremental.json').write_text(json.dumps(result))
+Path('.xiaoyibao_incremental.json').write_text(json.dumps(result))
 if new_total == 0:
     print('No files changed since last run. Nothing to update.')
     raise SystemExit(0)
@@ -752,7 +752,7 @@ python -c "
 import json
 from pathlib import Path
 
-result = json.loads(open('.graphify_incremental.json').read()) if Path('.graphify_incremental.json').exists() else {}
+result = json.loads(open('.xiaoyibao_incremental.json').read()) if Path('.xiaoyibao_incremental.json').exists() else {}
 code_exts = {'.py','.ts','.js','.go','.rs','.java','.cpp','.c','.rb','.swift','.kt','.cs','.scala','.php','.cc','.cxx','.hpp','.h','.kts','.lua','.toc'}
 new_files = result.get('new_files', {})
 all_changed = [f for files in new_files.values() for f in files]
@@ -781,7 +781,7 @@ existing_data = json.loads(Path('xiaoyibao-out/graph.json').read_text())
 G_existing = json_graph.node_link_graph(existing_data, edges='links')
 
 # Load new extraction
-new_extraction = json.loads(Path('.graphify_extract.json').read_text())
+new_extraction = json.loads(Path('.xiaoyibao_extract.json').read_text())
 G_new = build_from_json(new_extraction)
 
 # Merge: new nodes/edges into existing graph
@@ -804,8 +804,8 @@ import networkx as nx
 from pathlib import Path
 
 # Load old graph (before update) from backup written before merge
-old_data = json.loads(Path('.graphify_old.json').read_text()) if Path('.graphify_old.json').exists() else None
-new_extract = json.loads(Path('.graphify_extract.json').read_text())
+old_data = json.loads(Path('.xiaoyibao_old.json').read_text()) if Path('.xiaoyibao_old.json').exists() else None
+new_extract = json.loads(Path('.xiaoyibao_extract.json').read_text())
 G_new = build_from_json(new_extract)
 
 if old_data:
@@ -819,8 +819,8 @@ if old_data:
 "
 ```
 
-Before the merge step, save the old graph: `Copy-Item xiaoyibao-out/graph.json .graphify_old.json`
-Clean up after: `Remove-Item -ErrorAction SilentlyContinue .graphify_old.json`
+Before the merge step, save the old graph: `Copy-Item xiaoyibao-out/graph.json .xiaoyibao_old.json`
+Clean up after: `Remove-Item -ErrorAction SilentlyContinue .xiaoyibao_old.json`
 
 ---
 
@@ -862,7 +862,7 @@ analysis = {
     'gods': gods,
     'surprises': surprises,
 }
-Path('.graphify_analysis.json').write_text(json.dumps(analysis, indent=2))
+Path('.xiaoyibao_analysis.json').write_text(json.dumps(analysis, indent=2))
 print(f'Re-clustered: {len(communities)} communities')
 "
 ```
