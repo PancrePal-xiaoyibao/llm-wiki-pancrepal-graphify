@@ -22,7 +22,11 @@
 ### 安装
 
 ```bash
-pip install xyb
+# 本地开发模式安装
+pip install -e .
+
+# 或直接运行
+python -m xyb --help
 ```
 
 ### 使用
