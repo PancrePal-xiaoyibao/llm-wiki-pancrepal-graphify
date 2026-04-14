@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "xiaoyibao"
-version = "0.1.0"
-description = "胰腺癌智能管理知识图谱平台 - Pancreatic cancer knowledge graph platform"
+version = "4.0.0"
+description = "胰腺癌智能管理平台 - 基于知识图谱的个性化病情管理"
 authors = ["PancrePal <pancrepal@xiaoyibao.org>", "Safi Shamsi <safishamsi@xiaoyibao.org>"]
 license = "MIT"
 readme = "README.md"
