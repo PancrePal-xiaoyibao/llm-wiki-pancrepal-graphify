@@ -7,6 +7,18 @@
 
 **面向胰腺癌智能管理的开源知识图谱平台。** 整合多模态医学文档、结构化病历、基因数据、治疗记录，构建可查询的知识图谱，辅助精准诊疗决策。
 
+## ❤️回顾我们社区在病情管理方面的努力轨迹
+
+## 路线演进
+
+FastGPT RAG 1.0（2023）  
+→ 社区化 RAG 1.0（2023–2024）  
+→ get 笔记管理个人知识库（2025）  
+→ Genie_report_skills（2026）  
+→ ca199 toolkit（lihb 贡献）  
+→ case organizer（2026.03）  
+→ openclaw + graphify / llm-wiki（现在）
+
 ## ✨ 核心特性
 
 - 📄 **多格式文档提取** - DICOM 医学影像、PDF、Office、图片、视频转录
@@ -16,6 +28,16 @@
 - 📊 **多格式报告** - Markdown、HTML 交互图谱、PDF
 - 🛠️ **MCP 工具集成** - 8 个医疗专用查询工具
 - ⚙️ **标准目录生成** - 12 类胰腺癌档案标准化结构
+- 
+👉 参考项目：Speical thanks to contribution of [safishamsi/graphify](https://github.com/safishamsi/graphify](https://github.com/safishamsi/graphify)
+
+👉 看看效果：
+![](https://picgo-1302991947.cos.ap-guangzhou.myqcloud.com/images/f9e923d38912b3198772120c221f4404.png)
+
+
+---
+
+![](https://picgo-1302991947.cos.ap-guangzhou.myqcloud.com/images/20260415110525024.png) 
 
 ## 🚀 快速开始
 
@@ -153,6 +175,10 @@ pytest tests/ -v --ignore=tests/test_transcribe.py
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
+
+<p align="center">
+  <img src="https://picgo-1302991947.cos.ap-guangzhou.myqcloud.com/images/20260415113245326.png" width="400"/>
+</p>
 
 ## 📄 许可证
 
